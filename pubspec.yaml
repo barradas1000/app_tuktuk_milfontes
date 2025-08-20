@@ -1,0 +1,40 @@
+name: tuktuk_gps_tracker
+description: "Um aplicativo Flutter para rastreamento GPS de condutores."
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  geolocator: ^14.0.2
+  permission_handler: ^12.0.1
+  http: ^1.5.0
+  intl: ^0.20.2
+  flutter_dotenv: ^5.2.1
+  go_router: ^16.2.0
+  shared_preferences: ^2.5.3
+  flutter_foreground_task: ^9.1.0
+  flutter_local_notifications: ^19.4.0
+  characters: ^1.4.0
+  material_color_utilities: ^0.11.1
+  meta: 1.16.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+  flutter_lints: ^6.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icon.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env

@@ -1,0 +1,125 @@
+# Ignorar variáveis de ambiente e ícone
+.env
+assets/images/icon.png
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub/
+build/
+flutter_*.png
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Android
+android/local.properties
+android/key.properties
+android/app/google-services.json
+android/app/debug.keystore
+
+# iOS
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Runner.xcworkspace/
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/FlutterPluginRegistrant.swift
+
+# Web
+web/favicon.png
+web/icons/
+
+# Linux
+linux/ephemeral/
+
+# MacOS
+macos/ephemeral/
+
+# Windows
+windows/ephemeral/
+
+# Misc
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+
+# Production: ignore sensitive and build files
+*.keystore
+*.jks
+*.pem
+*.p12
+*.crt
+*.key
+*.der
+*.cer
+*.pfx
+*.p7b
+*.p7c
+*.asc
+*.gpg
+*.sig
+*.pub
+*.priv
+
+# Node
+node_modules/
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
