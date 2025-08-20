@@ -34,7 +34,8 @@ class MyTaskHandler extends TaskHandler {
         .then((position) {
       _sendDataToSupabase(position, isActive: true);
     }).catchError((error) {
-      // Handle error (ex.: log ou save offline)
+      // Log do erro para depuração
+      print('Erro no MyTaskHandler: $error');
     });
   }
 
@@ -42,6 +43,14 @@ class MyTaskHandler extends TaskHandler {
   Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {
     await FlutterForegroundTask.clearAllData();
   }
+}
+
+/// Salva uma posição pendente no SharedPreferences a partir do background.
+Future<void> _savePendingPositionInBackground(String payload) async {
+  final prefs = await SharedPreferences.getInstance();
+  final pending = prefs.getStringList('pendingPositions') ?? [];
+  pending.add(payload);
+  await prefs.setStringList('pendingPositions', pending);
 }
 
 Future<void> _sendDataToSupabase(Position position,
@@ -69,13 +78,13 @@ Future<void> _sendDataToSupabase(Position position,
       },
       body: payload,
     );
-    // Se necessário, chame a função para salvar posição pendente
-    // if (response.statusCode < 200 || response.statusCode >= 300) {
-    //   await _savePendingPosition(payload);
-    // }
+    // Se a resposta do servidor indicar uma falha, guarda os dados
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      await _savePendingPositionInBackground(payload);
+    }
   } catch (e) {
-    // Se necessário, chame a função para salvar posição pendente
-    // await _savePendingPosition(payload);
+    // Se ocorrer um erro de rede (ex: sem internet), guarda os dados
+    await _savePendingPositionInBackground(payload);
   }
 }
 
@@ -156,7 +165,7 @@ class _GpsTrackingScreenState extends State<GpsTrackingScreen> {
   void initState() {
     super.initState();
     _initForegroundTask();
-    _restoreTrackingState();
+    _initializeSession();
   }
 
   @override
@@ -169,22 +178,41 @@ class _GpsTrackingScreenState extends State<GpsTrackingScreen> {
     FlutterForegroundTask.setTaskHandler(MyTaskHandler());
   }
 
-  Future<void> _restoreTrackingState() async {
+  Future<void> _initializeSession() async {
     final prefs = await SharedPreferences.getInstance();
     final wasTracking = prefs.getBool('isTracking') ?? false;
+    final savedConductorId = prefs.getString('activeConductorId') ?? '';
+    final newConductorId = widget.conductorId;
+
     if (wasTracking) {
-      final startMillis = prefs.getInt('startTime');
-      _startTime = startMillis != null
-          ? DateTime.fromMillisecondsSinceEpoch(startMillis)
-          : null;
-      _totalDistance = prefs.getDouble('totalDistance') ?? 0.0;
-      if (mounted) {
-        setState(() {
-          _isTracking = true;
-          _statusMessage = 'Enviando...';
-        });
+      // Cenário 1: Sessão estava ativa.
+      if (newConductorId.isNotEmpty && newConductorId != savedConductorId) {
+        // TROCA DE CONDUTOR: ID do deep link é novo e diferente.
+        // Pára a sessão antiga silenciosamente e inicia a nova.
+        await _stopTracking();
+        _checkAndRequestPermissions();
+      } else {
+        // RETOMAR SESSÃO: Mesmo condutor ou app aberta manualmente.
+        final startMillis = prefs.getInt('startTime');
+        _startTime = startMillis != null
+            ? DateTime.fromMillisecondsSinceEpoch(startMillis)
+            : null;
+        _totalDistance = prefs.getDouble('totalDistance') ?? 0.0;
+        if (mounted) {
+          setState(() {
+            _isTracking = true;
+            _statusMessage = 'Enviando...';
+          });
+        }
+        _startTracking(resume: true);
       }
-      _startTracking(resume: true);
+    } else {
+      // Cenário 2: Nenhuma sessão estava ativa.
+      if (newConductorId.isNotEmpty) {
+        // INÍCIO POR DEEP LINK: Inicia uma nova sessão.
+        _checkAndRequestPermissions();
+      }
+      // Se não, não faz nada e espera pelo botão manual.
     }
   }
 
@@ -193,6 +221,11 @@ class _GpsTrackingScreenState extends State<GpsTrackingScreen> {
     await prefs.setBool('isTracking', _isTracking);
     await prefs.setInt('startTime', _startTime?.millisecondsSinceEpoch ?? 0);
     await prefs.setDouble('totalDistance', _totalDistance);
+    if (_isTracking) {
+      await prefs.setString('activeConductorId', _conductorId);
+    } else {
+      await prefs.remove('activeConductorId');
+    }
   }
 
   Future<void> _checkAndRequestPermissions() async {
@@ -287,7 +320,7 @@ class _GpsTrackingScreenState extends State<GpsTrackingScreen> {
     );
   }
 
-  void _stopTracking() async {
+  Future<void> _stopTracking() async {
     _positionStreamSubscription?.cancel();
     if (await FlutterForegroundTask.isRunningService) {
       await FlutterForegroundTask.stopService();
